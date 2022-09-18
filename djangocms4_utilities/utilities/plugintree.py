@@ -1,3 +1,6 @@
+from django.conf import settings
+
+from cms.models import PageContent
 from cms.models.placeholdermodel import Placeholder
 
 
@@ -24,7 +27,7 @@ def check_tree(placeholder, language=None):
         range(1, placeholder.get_last_plugin_position(language) + 1)
     ):
         messages.append(
-            f"{language}: Non consecutive position entries: {position_list}"
+            f"{language}, {placeholder.slot}: Non consecutive position entries: {position_list}"
         )
 
     # Check 2: Children AFTER parents
@@ -33,26 +36,23 @@ def check_tree(placeholder, language=None):
         if parent is not None:
             parent_position = placeholder.cmsplugin_set.filter(pk=parent).first()
             if parent_position is not None:
-                children_positions = placeholder.cmsplugin_set.filter(
-                    parent=parent
-                ).values_list("position", flat=True)
-                print(children_positions, len(children_positions))
+                children_positions = placeholder.cmsplugin_set.get(id=parent).get_descendants().values_list("position", flat=True)
                 if children_positions:
                     if min(children_positions) <= parent_position.position:
                         messages.append(
-                            f"{language}: Children with positions lower than their parent's (id={parent}) position"
+                            f"{language}, {placeholder.slot}: Children with positions lower than their parent's (id={parent}) position"
                         )
                     elif max(children_positions) - min(children_positions) + 1 > len(
                         children_positions
                     ):
                         messages.append(
-                            f"{language}: Gap in children positions of parent (id={parent})"
+                            f"{language}, {placeholder.slot}: Gap in children positions of parent (id={parent})"
                         )
     # Check 3: parents belonging to other placeholders
     for plugin in placeholder.cmsplugin_set.all():
         if plugin.parent and plugin.parent.placeholder != placeholder:
             messages.append(
-                f"{language}: Plugins claim to be children of parents in a different placeholder"
+                f"{language}, {placeholder.slot}: Plugins claim to be children of parents in a different placeholder"
             )
 
     return messages
@@ -106,11 +106,17 @@ def fix_tree(placeholder, language=None):
 def get_draft_placeholders():
     if "djangocms_versioning" in settings.INSTALLED_APPS:
 
-        unassigned = Placeholder.objects.filter(content_type=None)
-        from django.contrib.contenttypes.models import ContentType
+        placeholder = list(Placeholder.objects.filter(content_type=None))
 
-        ContentType.objects.filter()
+        from djangocms_versioning.helpers import remove_published_where
 
-        return unassigned
-    else:
-        return Placeholder.objects.all()
+        # Get all draft PageContents (Ensure that we don't change any previously published
+        # pages, allows us to use compare
+        page_contents = PageContent.objects.all()
+        page_contents = remove_published_where(page_contents)
+        page_contents = page_contents.filter(versions__state="draft")
+
+        for page_content in page_contents:
+            placeholder += list(page_content.placeholders.all())
+
+        return placeholder
