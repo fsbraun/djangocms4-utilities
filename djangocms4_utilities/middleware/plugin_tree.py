@@ -29,7 +29,7 @@ def watch(get_response):
                         for message in messages:
                             stdout.write(message, stdout.style.ERROR)
                     else:
-                        stdout.write(f"Placeholder {placeholder.id} ok.", stdout.style.SUCCESS)
+                        stdout.write(f"Placeholder {placeholder.slot} (id={placeholder.id}) ok.", stdout.style.SUCCESS)
         return response
 
     return middleware
