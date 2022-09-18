@@ -1,0 +1,4 @@
+include LICENSE
+include README.md
+recursive-include djangocms4_utilities *
+recursive-exclude * *.py[co]
