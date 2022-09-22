@@ -10,6 +10,11 @@ from django.core.management.base import OutputWrapper
 stdout = OutputWrapper(sys.stdout)
 stdout.style = color_style()
 
+def append(messages, new):
+    if new not in messages:
+        messages.append(new)
+    return messages
+
 
 def check_tree(placeholder, language=None):
     """checks the plugin tree if the placeholder for common inconsistencies and returns a list
@@ -33,7 +38,8 @@ def check_tree(placeholder, language=None):
     if position_list != list(
         range(1, placeholder.get_last_plugin_position(language) + 1)
     ):
-        messages.append(
+        append(
+            messages,
             f"{language}, {placeholder.slot}: Non consecutive position entries: {position_list}"
         )
 
@@ -47,23 +53,27 @@ def check_tree(placeholder, language=None):
                 children_positions = placeholder.cmsplugin_set.get(id=parent_id).get_descendants().values_list("position", flat=True)
                 if children_positions:
                     if min(children_positions) <= parent.position:
-                        messages.append(
+                        append(
+                            messages,
                             f"{language}, {placeholder.slot}: Children with positions lower than their parent's (id={parent_id}) position"
                         )
                         if parent.position + len(children_positions) > last_plugin:
-                            messages.append(
+                            append(
+                                messages,
                                 f"---> Moving plugin (id={parent_id}) up in the tree will cause a server error."
                             )
                     elif max(children_positions) - min(children_positions) + 1 > len(
                         children_positions
                     ):
-                        messages.append(
+                        append(
+                            messages,
                             f"{language}, {placeholder.slot}: Gap in children positions of parent (id={parent_id})"
                         )
     # Check 3: parents belonging to other placeholders
     for plugin in placeholder.cmsplugin_set.all():
         if plugin.parent and plugin.parent.placeholder != placeholder:
-            messages.append(
+            append(
+                messages,
                 f"{language}, {placeholder.slot}: Plugins claim to be children of parents in a different placeholder"
             )
 
