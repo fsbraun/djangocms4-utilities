@@ -1,7 +1,14 @@
+import sys
+
 from django.conf import settings
 
 from cms.models import PageContent
 from cms.models.placeholdermodel import Placeholder
+from django.core.management import color_style
+from django.core.management.base import OutputWrapper
+
+stdout = OutputWrapper(sys.stdout)
+stdout.style = color_style()
 
 
 def check_tree(placeholder, language=None):
@@ -32,21 +39,26 @@ def check_tree(placeholder, language=None):
 
     # Check 2: Children AFTER parents
     parent_list = list(placeholder.cmsplugin_set.values_list("parent", flat=True))
-    for parent in parent_list:
-        if parent is not None:
-            parent_position = placeholder.cmsplugin_set.filter(pk=parent).first()
-            if parent_position is not None:
-                children_positions = placeholder.cmsplugin_set.get(id=parent).get_descendants().values_list("position", flat=True)
+    last_plugin = placeholder.get_last_plugin_position(language)
+    for parent_id in parent_list:
+        if parent_id is not None:
+            parent = placeholder.cmsplugin_set.filter(pk=parent_id).first()
+            if parent is not None:
+                children_positions = placeholder.cmsplugin_set.get(id=parent_id).get_descendants().values_list("position", flat=True)
                 if children_positions:
-                    if min(children_positions) <= parent_position.position:
+                    if min(children_positions) <= parent.position:
                         messages.append(
-                            f"{language}, {placeholder.slot}: Children with positions lower than their parent's (id={parent}) position"
+                            f"{language}, {placeholder.slot}: Children with positions lower than their parent's (id={parent_id}) position"
                         )
+                        if parent.position + len(children_positions) > last_plugin:
+                            messages.append(
+                                f"---> Moving plugin (id={parent_id}) up in the tree will cause a server error."
+                            )
                     elif max(children_positions) - min(children_positions) + 1 > len(
                         children_positions
                     ):
                         messages.append(
-                            f"{language}, {placeholder.slot}: Gap in children positions of parent (id={parent})"
+                            f"{language}, {placeholder.slot}: Gap in children positions of parent (id={parent_id})"
                         )
     # Check 3: parents belonging to other placeholders
     for plugin in placeholder.cmsplugin_set.all():
@@ -56,6 +68,18 @@ def check_tree(placeholder, language=None):
             )
 
     return messages
+
+
+def check_placeholders(placeholders=None):
+    if placeholders == None:
+        placeholders = get_draft_placeholders()
+    for placeholder in placeholders:
+        messages = check_tree(placeholder)
+        if messages:
+            for message in messages:
+                stdout.write(message, stdout.style.ERROR)
+        else:
+            stdout.write(f"Placeholder {placeholder.slot} (id={placeholder.id}) ok.", stdout.style.SUCCESS)
 
 
 def fix_tree(placeholder, language=None):
@@ -120,3 +144,5 @@ def get_draft_placeholders():
             placeholder += list(page_content.placeholders.all())
 
         return placeholder
+
+    return Placeholder.objects.all()

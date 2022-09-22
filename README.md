@@ -9,6 +9,17 @@ Install djangocms4-utilities directly from github:
 
 Add `djangocms4_utilities` to your `INSTALLED_APPS``
 
+## Management command checktree
+
+### Usage
+
+    ./manage.py checktree
+
+### Effect
+
+`checktree` takes all placeholders of draft pages and identifies potential issues. The results 
+are printed to the console. **This command does not change the database.**
+
 ## Management command fixtree
 
 Attention: **Always test this command on a copy of the database first and check
