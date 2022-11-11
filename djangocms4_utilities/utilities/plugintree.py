@@ -40,7 +40,7 @@ def check_tree(placeholder, language=None):
     ):
         append(
             messages,
-            f"{language}, {placeholder.slot}: Non consecutive position entries: {position_list}"
+            f"{language}, {placeholder.slot} ({placeholder.id}): Non consecutive position entries: {position_list}"
         )
 
     # Check 2: Children AFTER parents
@@ -55,7 +55,8 @@ def check_tree(placeholder, language=None):
                     if min(children_positions) <= parent.position:
                         append(
                             messages,
-                            f"{language}, {placeholder.slot}: Children with positions lower than their parent's (id={parent_id}) position"
+                            f"{language}, {placeholder.slot} ({placeholder.id}): "
+                            f"Children with positions lower than their parent's (id={parent_id}) position"
                         )
                         if parent.position + len(children_positions) > last_plugin:
                             append(
@@ -67,14 +68,16 @@ def check_tree(placeholder, language=None):
                     ):
                         append(
                             messages,
-                            f"{language}, {placeholder.slot}: Gap in children positions of parent (id={parent_id})"
+                            f"{language}, {placeholder.slot} ({placeholder.id}): Gap in children "
+                            f"positions of parent (id={parent_id})"
                         )
     # Check 3: parents belonging to other placeholders
     for plugin in placeholder.cmsplugin_set.filter(language=language):
         if plugin.parent and plugin.parent.placeholder != placeholder:
             append(
                 messages,
-                f"{language}, {placeholder.slot}: Plugins claim to be children of parents in a different placeholder"
+                f"{language}, {placeholder.slot} ({placeholder.id}): Plugins claim to be children of "
+                f"parents in a different placeholder"
             )
 
     return messages
