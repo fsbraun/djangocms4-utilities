@@ -34,7 +34,7 @@ def check_tree(placeholder, language=None):
         return messages
 
     # Check 1: Positions are consecutive starting at 1
-    position_list = list(placeholder.cmsplugin_set.values_list("position", flat=True))
+    position_list = list(placeholder.cmsplugin_set.filter(language=language).values_list("position", flat=True))
     if position_list != list(
         range(1, placeholder.get_last_plugin_position(language) + 1)
     ):
@@ -44,7 +44,7 @@ def check_tree(placeholder, language=None):
         )
 
     # Check 2: Children AFTER parents
-    parent_list = list(placeholder.cmsplugin_set.values_list("parent", flat=True))
+    parent_list = list(placeholder.cmsplugin_set.filter(language=language).values_list("parent", flat=True))
     last_plugin = placeholder.get_last_plugin_position(language)
     for parent_id in parent_list:
         if parent_id is not None:
@@ -70,7 +70,7 @@ def check_tree(placeholder, language=None):
                             f"{language}, {placeholder.slot}: Gap in children positions of parent (id={parent_id})"
                         )
     # Check 3: parents belonging to other placeholders
-    for plugin in placeholder.cmsplugin_set.all():
+    for plugin in placeholder.cmsplugin_set.filter(language=language):
         if plugin.parent and plugin.parent.placeholder != placeholder:
             append(
                 messages,
@@ -81,7 +81,7 @@ def check_tree(placeholder, language=None):
 
 
 def check_placeholders(placeholders=None):
-    if placeholders == None:
+    if placeholders is None:
         placeholders = get_draft_placeholders()
     for placeholder in placeholders:
         messages = check_tree(placeholder)
@@ -105,7 +105,7 @@ def fix_tree(placeholder, language=None):
     """
     if language is None:
         languages = (
-            placeholder.cmsplugin_set.order_by("language")
+            placeholder.cmsplugin_set.filter(language=language).order_by("language")
             .values_list("language", flat=True)
             .distinct()
         )
@@ -114,7 +114,7 @@ def fix_tree(placeholder, language=None):
         return
 
     # First cut links to other placeholders
-    for plugin in placeholder.cmsplugin_set.filter(language=language):
+    for plugin in placeholder.cmsplugin_set.filter(language=language).filter(language=language):
         if plugin.parent and plugin.parent.placeholder != placeholder:
             plugin.update(
                 parent=None
