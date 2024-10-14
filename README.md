@@ -4,7 +4,7 @@ Djangocms-4 Utilities bundles little helpers to support debugging of Django CMS 
 
 Install djangocms4-utilities directly from github:
 
-    pip install git+https:/github.com/fsbraun/djangocms4-utilities#egg=djangocms4-utilities
+    pip install git+https://github.com/fsbraun/djangocms4-utilities#egg=djangocms4-utilities
 
 
 Add `djangocms4_utilities` to your `INSTALLED_APPS``
