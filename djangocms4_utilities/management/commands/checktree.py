@@ -8,4 +8,4 @@ class Command(BaseCommand):
            'to the console'
 
     def handle(self, *args, **options):
-        plugintree.check_placeholders()
+        plugintree.check_placeholders(plugintree.Pladceholder.objects.all())

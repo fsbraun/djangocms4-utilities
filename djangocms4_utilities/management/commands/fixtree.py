@@ -7,6 +7,6 @@ class Command(BaseCommand):
     help = 'Runs fix_tree for every draft placeholder'
 
     def handle(self, *args, **options):
-        for placeholder in plugintree.get_draft_placeholders():
+        for placeholder in plugintree.Placeholder.objects.all():
             self.stdout.write(f"Fixing placeholder {placeholder.slot} (id={placeholder.id})")
             plugintree.fix_tree(placeholder)

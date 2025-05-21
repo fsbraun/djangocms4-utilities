@@ -91,8 +91,6 @@ def check_placeholders(placeholders=None):
         if messages:
             for message in messages:
                 stdout.write(message, stdout.style.ERROR)
-        else:
-            stdout.write(f"Placeholder {placeholder.slot} (id={placeholder.id}) ok.", stdout.style.SUCCESS)
 
 
 def fix_tree(placeholder, language=None):
