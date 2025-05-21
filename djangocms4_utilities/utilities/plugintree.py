@@ -152,11 +152,15 @@ def get_draft_placeholders():
 
         # Get all draft PageContents (Ensure that we don't change any previously published
         # pages, allows us to use compare
+<<<<<<< HEAD
         page_contents = PageContent.objects.all()
         try:
             page_contents = remove_published_where(page_contents)
         except NotImplementedError:
             page_contents = PageContent.admin_manager.all()
+=======
+        page_contents = PageContent.admin_manager.all()
+>>>>>>> afad270 (Use admin manager)
         page_contents = page_contents.filter(versions__state="draft")
 
         for page_content in page_contents:
