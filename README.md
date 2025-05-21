@@ -17,7 +17,7 @@ Add `djangocms4_utilities` to your `INSTALLED_APPS``
 
 ### Effect
 
-`checktree` takes all placeholders of draft pages and identifies potential issues. The results 
+`checktree` takes all placeholders and identifies potential issues. The results 
 are printed to the console. **This command does not change the database.**
 
 ## Management command fixtree
@@ -31,7 +31,7 @@ that you do not lose data.**
 
 ### Effect
 
-`fixtree` takes all placeholders of draft pages and rebuilds their plugin tree.
+`fixtree` takes all placeholders and rebuilds their plugin tree.
 This is helpful if you encounter an 
 [issue (#7391) with moving plugins](https://github.com/django-cms/django-cms/issues/7391).
 
@@ -42,6 +42,8 @@ The rebuilt tree will have the following properties:
 2. All child plugins will have a position behind their respective parents. 
 3. All descendants of a plugin (children and grandchildren) will have consecutive positions
    immediately following the parent.
+
+This also affects published content - even though the content is not altered.
 
 ## Middleware to watch for plugin tree consistency
 
