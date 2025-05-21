@@ -124,18 +124,21 @@ def fix_tree(placeholder, language=None):
             )  # At this point the tree is seriously broken: Cut the link
 
     # Then rebuild tree
-    def build_tree(self, parent):
-        nonlocal position
-
+    def build_tree(self, parent, new_positions):
         for plugin in self.cmsplugin_set.filter(
             parent=parent, language=language
         ).order_by("position"):
-            position += 1
-            plugin.update(position=position)
-            build_tree(self, plugin)
+            new_positions.append(plugin)
+            build_tree(self, plugin, new_positions)
 
     position = placeholder.get_last_plugin_position(language)
-    build_tree(placeholder, None)
+    new_positions = []
+    build_tree(placeholder, None, new_positions)
+
+    for pos, plugin in enumerate(new_positions, start=position + 1):
+        plugin.position = pos
+    
+    CMSPlugin.objects.bulk_update(new_positions, ["positon"])
 
     placeholder._recalculate_plugin_positions(language)
 
