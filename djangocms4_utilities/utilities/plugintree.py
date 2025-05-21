@@ -117,7 +117,7 @@ def fix_tree(placeholder, language=None):
         return
 
     # First cut links to other placeholders
-    for plugin in placeholder.cmsplugin_set.filter(language=language).filter(language=language):
+    for plugin in placeholder.cmsplugin_set.filter(language=language):
         if plugin.parent and plugin.parent.placeholder != placeholder:
             plugin.update(
                 parent=None
