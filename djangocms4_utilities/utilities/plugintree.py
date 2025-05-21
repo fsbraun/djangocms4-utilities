@@ -53,10 +53,12 @@ def check_tree(placeholder, language=None):
                 children_positions = placeholder.cmsplugin_set.get(id=parent_id).get_descendants().values_list("position", flat=True)
                 if children_positions:
                     if min(children_positions) <= parent.position:
+                        min_pos = min(children_positions)
                         append(
                             messages,
                             f"{language}, {placeholder.slot} ({placeholder.id}): "
-                            f"Children with positions lower than their parent's (id={parent_id}) position"
+                            f"Children with positions ({min_pos}) lower than their parent's position "
+                            f"(id={parent_id}, position={parent.position})"
                         )
                         if parent.position + len(children_positions) > last_plugin:
                             append(
