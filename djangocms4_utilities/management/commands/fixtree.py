@@ -8,5 +8,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         for placeholder in plugintree.Placeholder.objects.all():
-            self.stdout.write(f"Fixing placeholder {placeholder.slot} (id={placeholder.id})")
-            plugintree.fix_tree(placeholder)
+            self.stdout.write(f"Fixing {placeholder.slot} (id={placeholder.id})")
+            languages = placeholder.cmsplugin_set.values_list('language', flat=True).distinct()
+            for language in languages:
+                plugintree.fix_tree(placeholder, language)

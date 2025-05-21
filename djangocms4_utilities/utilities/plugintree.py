@@ -2,8 +2,7 @@ import sys
 
 from django.conf import settings
 
-from cms.models import PageContent
-from cms.models.placeholdermodel import Placeholder
+from cms.models import CMSPlugin, PageContent, Placeholder
 from django.core.management import color_style
 from django.core.management.base import OutputWrapper
 
@@ -95,7 +94,7 @@ def check_placeholders(placeholders=None):
                 stdout.write(message, stdout.style.ERROR)
 
 
-def fix_tree(placeholder, language=None):
+def fix_tree(placeholder, language):
     """rebuilds the plugin tree for the placeholder. The resulting tree will look like this:
     Parent 1, position 1
         Child 1, position 2
@@ -106,22 +105,11 @@ def fix_tree(placeholder, language=None):
         Child 4 position 7
     Child 5, position 8   # (Parent link to parent plugin in other placeholder removed)
     """
-    if language is None:
-        languages = (
-            placeholder.cmsplugin_set.filter(language=language).order_by("language")
-            .values_list("language", flat=True)
-            .distinct()
-        )
-        for language in languages:
-            fix_tree(placeholder, language)
-        return
 
     # First cut links to other placeholders
-    for plugin in placeholder.cmsplugin_set.filter(language=language):
-        if plugin.parent and plugin.parent.placeholder != placeholder:
-            plugin.update(
-                parent=None
-            )  # At this point the tree is seriously broken: Cut the link
+    placeholder.cmsplugin_set.filter(language=language).exclude(
+        parent__placeholder=placeholder
+    ).update(parent=None)
 
     # Then rebuild tree
     def build_tree(self, parent, new_positions):
@@ -131,14 +119,16 @@ def fix_tree(placeholder, language=None):
             new_positions.append(plugin)
             build_tree(self, plugin, new_positions)
 
-    position = placeholder.get_last_plugin_position(language)
+    position = placeholder.get_last_plugin_position(language) or 0
     new_positions = []
-    build_tree(placeholder, None, new_positions)
+    for plugin in placeholder.cmsplugin_set.filter(parent=None, language=language).order_by("position"):
+        new_positions.append(plugin)
+        new_positions += list(plugin.get_descendants())
 
     for pos, plugin in enumerate(new_positions, start=position + 1):
         plugin.position = pos
-    
-    CMSPlugin.objects.bulk_update(new_positions, ["positon"])
+
+    CMSPlugin.objects.bulk_update(new_positions, ["position"])
 
     placeholder._recalculate_plugin_positions(language)
 
@@ -152,15 +142,7 @@ def get_draft_placeholders():
 
         # Get all draft PageContents (Ensure that we don't change any previously published
         # pages, allows us to use compare
-<<<<<<< HEAD
-        page_contents = PageContent.objects.all()
-        try:
-            page_contents = remove_published_where(page_contents)
-        except NotImplementedError:
-            page_contents = PageContent.admin_manager.all()
-=======
         page_contents = PageContent.admin_manager.all()
->>>>>>> afad270 (Use admin manager)
         page_contents = page_contents.filter(versions__state="draft")
 
         for page_content in page_contents:
